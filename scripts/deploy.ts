@@ -1,23 +1,84 @@
-import { ethers } from "hardhat";
+require("dotenv").config();
+const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const provider = hre.ethers.provider;
+  const deployerWallet = new hre.ethers.Wallet(
+    process.env.AURORA_PRIVATE_KEY,
+    provider
+  );
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  console.log("Deploying contracts with the account:", deployerWallet.address);
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  console.log(
+    "Account balance:",
+    (await deployerWallet.getBalance()).toString()
+  );
 
-  await lock.deployed();
+  const swapFactory = await hre.ethers.getContractFactory("SwapContract");
+  const daiToken = await hre.ethers.getContractFactory("DaiToken");
+  const ethToken = await hre.ethers.getContractFactory("EthToken");
+  const aoaToken = await hre.ethers.getContractFactory("AuroraToken");
+  const shibToken = await hre.ethers.getContractFactory("ShibainuToken");
+  const solToken = await hre.ethers.getContractFactory("SolanaToken");
+  const usdtToken = await hre.ethers.getContractFactory("TetherToken");
+  const uniToken = await hre.ethers.getContractFactory("UniswapToken");
+  const maticToken = await hre.ethers.getContractFactory("PolygonToken");
 
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+  const options = { gasLimit: 1000000 };
+
+  const SwapContract = await swapFactory
+    .connect(deployerWallet)
+    .deploy(options);
+  await SwapContract.deployed();
+
+  const DaiToken = await daiToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const EthToken = await ethToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const AoaToken = await aoaToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const ShibToken = await shibToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const SolToken = await solToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const UsdtToken = await usdtToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const UniToken = await uniToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  const MaticToken = await maticToken
+    .connect(deployerWallet)
+    .deploy(SwapContract.address, options);
+  await DaiToken.deployed();
+  await EthToken.deployed();
+  await AoaToken.deployed();
+  await ShibToken.deployed();
+  await SolToken.deployed();
+  await UsdtToken.deployed();
+  await UniToken.deployed();
+  await MaticToken.deployed();
+
+  console.log("Swap Contract is deployed to:", SwapContract.address);
+  console.log("DaiToken is deployed to:", DaiToken.address);
+  console.log("EthToken is deployed to:", EthToken.address);
+  console.log("AoaToken is deployed to:", AoaToken.address);
+  console.log("ShibToken is deployed to:", ShibToken.address);
+  console.log("SolToken is deployed to:", SolToken.address);
+  console.log("UsdtToken is deployed to:", UsdtToken.address);
+  console.log("UniToken is deployed to:", UniToken.address);
+  console.log("MaticToken is deployed to:", MaticToken.address);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
